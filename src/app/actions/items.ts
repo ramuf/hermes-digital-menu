@@ -3,71 +3,68 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function createItem(data: {
+export async function createItem(formData: {
   categoryId: string;
+  name: string;
+  description: string;
   price: number;
-  imageUrl?: string;
+  imageUrl: string;
   sortOrder: number;
-  translations: { lang: string; name: string; description?: string }[];
+  locale: string;
 }) {
-  const { categoryId, price, imageUrl, sortOrder, translations } = data;
+  await prisma.menuItem.create({
+    data: {
+      categoryId,
+      price,
+      imageUrl,
+      sortOrder,
+      isAvailable: true,
+      translations: {
+        create: {
+          lang: locale,
+          name,
+          description,
+        },
+      },
+    },
+  });
+  revalidatePath("/admin/items");
+  revalidatePath("/menu");
+}
 
-  const item = await prisma.menuItem.create({
+export async function updateItem(formData: {
+  id: string;
+  categoryId: string;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  sortOrder: number;
+  locale: string;
+}) {
+  await prisma.menuItem.update({
+    where: { id },
     data: {
       categoryId,
       price,
       imageUrl,
       sortOrder,
       translations: {
-        create: translations,
+        upsert: {
+          where: {
+            menuItemId_lang: {
+              menuItemId: id,
+              lang: locale,
+            },
+          },
+          update: { name, description },
+          create: { lang: locale, name, description },
+        },
       },
     },
   });
-
   revalidatePath("/admin/items");
-  return item;
-}
-
-export async function updateItem(id: string, data: {
-  categoryId?: string;
-  price?: number;
-  imageUrl?: string;
-  isAvailable?: boolean;
-  sortOrder?: number;
-  translations?: { lang: string; name: string; description?: string }[];
-}) {
-  const { translations, ...rest } = data;
-
-  const item = await prisma.menuItem.update({
-    where: { id },
-    data: rest,
-  });
-
-  if (translations) {
-    for (const trans of translations) {
-      await prisma.menuItemTranslation.upsert({
-        where: {
-          menuItemId_lang: {
-            menuItemId: id,
-            lang: trans.lang,
-          },
-        },
-        update: {
-          name: trans.name,
-          description: trans.description,
-        },
-        create: {
-          menuItemId: id,
-          lang: trans.lang,
-          name: trans.name,
-          description: trans.description,
-        },
-      });
-    }
-  }
-
-  revalidatePath("/admin/items");
-  return item;
+  revalidatePath("/menu");
 }
 
 export async function deleteItem(id: string) {
@@ -75,6 +72,7 @@ export async function deleteItem(id: string) {
     where: { id },
   });
   revalidatePath("/admin/items");
+  revalidatePath("/menu");
 }
 
 export async function toggleAvailability(id: string, isAvailable: boolean) {
@@ -83,4 +81,5 @@ export async function toggleAvailability(id: string, isAvailable: boolean) {
     data: { isAvailable },
   });
   revalidatePath("/admin/items");
+  revalidatePath("/menu");
 }
