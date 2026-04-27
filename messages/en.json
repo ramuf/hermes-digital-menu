@@ -1,0 +1,9 @@
+{
+  "Menu": {
+    "title": "Digital Menu",
+    "price": "Price"
+  },
+  "Common": {
+    "loading": "Loading..."
+  }
+}
