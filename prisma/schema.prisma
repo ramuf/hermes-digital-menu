@@ -6,6 +6,7 @@ datasource db {
   provider = "sqlite"
 }
 
+
 model Category {
   id           String               @id @default(cuid())
   sortOrder    Int                  @default(0)
@@ -44,3 +45,10 @@ model MenuItemTranslation {
 
   @@unique([menuItemId, lang])
 }
+
+model Admin {
+  id           String @id @default(cuid())
+  email        String @unique
+  passwordHash String
+}
+
