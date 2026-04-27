@@ -1,12 +1,46 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "sqlite"
+}
+
+model Category {
+  id           String               @id @default(cuid())
+  sortOrder    Int                  @default(0)
+  translations CategoryTranslation[]
+  menuItems    MenuItem[]
+}
+
+model CategoryTranslation {
+  id         String   @id @default(cuid())
+  categoryId String
+  lang       String   // PT, FR, ES, EN
+  name       String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, lang])
+}
+
+model MenuItem {
+  id           String               @id @default(cuid())
+  categoryId   String
+  price        Float
+  imageUrl     String?
+  isAvailable  Boolean              @default(true)
+  sortOrder    Int                  @default(0)
+  category     Category             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  translations MenuItemTranslation[]
+}
+
+model MenuItemTranslation {
+  id          String    @id @default(cuid())
+  menuItemId  String
+  lang        String    // PT, FR, ES, EN
+  name        String
+  description String?
+  menuItem    MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@unique([menuItemId, lang])
 }
